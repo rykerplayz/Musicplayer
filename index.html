@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PinkBeats Pro</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-pink: #ff69b4; /* Hot Pink */
+            --light-pink: #ffb6c1; /* Light Pink */
+            --dark-pink: #c71585; /* Medium Violet Red for accents */
+            --background-dark: #1e1e1e;
+            --surface-dark: #2a2a2a;
+            --text-light: #f0f0f0;
+            --text-medium: #cccccc;
+            --text-dark: #333333; /* For text on pink backgrounds */
+            --border-color: #444;
+            --hover-pink-bg: rgba(255, 105, 180, 0.1);
+            --icon-fill: var(--text-light);
+            --icon-fill-active: var(--primary-pink);
+            --button-bg-hover: rgba(255, 105, 180, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .player-container {
+            display: flex;
+            width: 95vw;
+            max-width: 1200px;
+            height: 85vh;
+            max-height: 700px;
+            background-color: var(--surface-dark);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .initial-folder-selector-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: var(--surface-dark);
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: var(--text-light);
+            width: 90%;
+            max-width: 500px;
+        }
+        .initial-folder-selector-container h1 {
+            color: var(--primary-pink);
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        .initial-folder-selector-container p {
+            margin-bottom: 25px;
+            color: var(--text-medium);
+            font-size: 1.1em;
+        }
+
+        .sidebar {
+            width: 30%;
+            min-width: 280px;
+            max-width: 350px;
+            background-color: rgba(0,0,0,0.2);
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar .app-title {
+            color: var(--primary-pink);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .folder-selector {
+            margin-bottom: 20px;
+        }
+
+        .folder-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: var(--primary-pink);
+            color: var(--text-dark);
+            padding: 12px 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+            border: none;
+            font-size: 0.95em;
+            width: 100%;
+        }
+        .folder-button:hover {
+            background-color: var(--dark-pink);
+        }
+        .folder-button svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-dark);
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 12px;
+            padding-left: 35px; /* Space for icon */
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+        .search-bar input::placeholder {
+            color: var(--text-medium);
+        }
+        .search-bar .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            fill: var(--text-medium);
+        }
+
+        .song-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .song-list li {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            font-size: 0.9em;
+            display: block; /* For search filtering */
+        }
+        .song-list li.hidden-by-search {
+            display: none;
+        }
+        .song-list li:last-child { border-bottom: none; }
+        .song-list li:hover { background-color: var(--hover-pink-bg); }
+        .song-list li.active {
+            background-color: var(--primary-pink);
+            color: var(--text-dark);
+        }
+        .song-list li .song-item-title {
+            font-weight: 600; display: block; margin-bottom: 3px;
+        }
+        .song-list li .song-item-artist {
+            font-size: 0.85em; color: var(--text-medium);
+        }
+        .song-list li.active .song-item-artist {
+            color: var(--text-dark); opacity: 0.85;
+        }
+
+        .main-content {
+            flex-grow: 1; padding: 30px 40px; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; overflow-y: auto;
+        }
+
+        .album-art-section {
+            width: 100%; display: flex; justify-content: center;
+            margin-bottom: 25px; margin-top: 10px;
+        }
+        .album-art-wrapper {
+            width: 220px; height: 220px; position: relative;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        #albumArt {
+            width: 100%; height: 100%; object-fit: cover; display: none;
+        }
+        .no-image-placeholder {
+            width: 100%; height: 100%; background-color: var(--background-dark);
+            border: 2px dashed var(--border-color); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: var(--text-medium);
+            border-radius: 10px; text-align: center;
+        }
+        .no-image-placeholder svg {
+            width: 50px; height: 50px; margin-bottom: 12px; fill: var(--primary-pink);
+        }
+        .no-image-placeholder.hidden { display: none; }
+
+        .song-details-section {
+            text-align: center; margin-bottom: 25px; width: 100%;
+        }
+        #songTitle {
+            font-size: 1.8em; margin-bottom: 8px; color: var(--light-pink); font-weight: 700;
+        }
+        #songArtist {
+            font-size: 1.1em; color: var(--text-medium);
+        }
+
+        .progress-section {
+            width: 90%; max-width: 450px; display: flex; align-items: center;
+            gap: 12px; margin-bottom: 25px;
+        }
+        #progressBar {
+            flex-grow: 1; -webkit-appearance: none; appearance: none; height: 10px;
+            background: var(--border-color); border-radius: 5px; cursor: pointer; outline: none;
+        }
+        #progressBar::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+            background: var(--primary-pink); border-radius: 50%; cursor: pointer;
+            border: 2px solid var(--surface-dark);
+        }
+        #progressBar::-moz-range-thumb {
+            width: 18px; height: 18px; background: var(--primary-pink); border-radius: 50%;
+            cursor: pointer; border: 2px solid var(--surface-dark);
+        }
+        #progressBar:hover::-webkit-slider-thumb { background: var(--dark-pink); }
+        #progressBar:hover::-moz-range-thumb { background: var(--dark-pink); }
+        #currentTime, #totalTime {
+            font-size: 0.9em; color: var(--text-medium); width: 45px; text-align: center;
+        }
+
+        .controls-section {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 30px;
+        }
+        .control-btn {
+            background: none; border: 1px solid transparent; /* For consistent sizing */
+            color: var(--text-light); cursor: pointer;
+            padding: 10px 15px; /* Rectangular shape */
+            border-radius: 8px; /* Slightly rounded */
+            transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .control-btn svg {
+            width: 22px; height: 22px; fill: var(--icon-fill);
+            transition: fill 0.2s ease;
+        }
+        .control-btn:hover {
+            background-color: var(--button-bg-hover);
+        }
+        .control-btn:hover svg { fill: var(--icon-fill-active); }
+        .control-btn.active svg { fill: var(--icon-fill-active); }
+        .control-btn.active { border-color: var(--primary-pink); }
+
+        .play-btn {
+            background-color: var(--primary-pink);
+            padding: 12px 18px; /* Larger play button */
+        }
+        .play-btn svg {
+            fill: var(--text-dark); /* Icon dark on pink bg */
+            width: 28px; height: 28px; /* Larger icon for play/pause */
+        }
+        .play-btn:hover {
+            background-color: var(--dark-pink);
+        }
+        .play-btn:hover svg { fill: var(--text-dark); } /* Keep dark on hover */
+        .play-btn.active svg { fill: var(--text-dark); } /* Keep dark if active (though play has no active state) */
+
+
+        .extra-controls-section {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 90%; max-width: 500px; font-size: 0.95em; margin-bottom: 10px;
+        }
+        .volume-control {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .volume-control #volumeIconContainer svg { /* Target SVG inside container */
+            width: 20px; height: 20px; fill: var(--text-medium);
+            transition: fill 0.2s ease;
+        }
+        .volume-control:hover #volumeIconContainer svg { fill: var(--primary-pink); }
+
+        #volumeSlider {
+            -webkit-appearance: none; appearance: none; width: 120px; height: 8px;
+            background: var(--border-color); border-radius: 4px; cursor: pointer; outline: none;
+        }
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+            background: var(--light-pink); border-radius: 50%; cursor: pointer;
+            border: 2px solid var(--surface-dark);
+        }
+        #volumeSlider::-moz-range-thumb {
+            width: 16px; height: 16px; background: var(--light-pink); border-radius: 50%;
+            cursor: pointer; border: 2px solid var(--surface-dark);
+        }
+        #volumeSlider:hover::-webkit-slider-thumb { background: var(--primary-pink); }
+        #volumeSlider:hover::-moz-range-thumb { background: var(--primary-pink); }
+
+        .shuffle-control {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+        }
+        .shuffle-control label {
+            font-size: 0.85em; color: var(--text-medium);
+        }
+        .shuffle-slider-container {
+            display: flex; align-items: center; gap: 8px;
+        }
+        #shuffleSlider {
+            width: 100px; accent-color: var(--primary-pink);
+            -webkit-appearance: none; appearance: none; height: 8px;
+            background: var(--border-color); border-radius: 4px; cursor: pointer; outline: none;
+        }
+        #shuffleSlider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+            background: var(--light-pink); border-radius: 50%; cursor: pointer;
+            border: 2px solid var(--surface-dark);
+        }
+        #shuffleSlider::-moz-range-thumb {
+            width: 16px; height: 16px; background: var(--light-pink); border-radius: 50%;
+            cursor: pointer; border: 2px solid var(--surface-dark);
+        }
+        #shuffleSlider:hover::-webkit-slider-thumb { background: var(--primary-pink); }
+        #shuffleSlider:hover::-moz-range-thumb { background: var(--primary-pink); }
+
+        #shuffleLevelDisplay {
+            font-size: 0.8em; color: var(--text-medium); min-width: 80px; text-align: right;
+        }
+
+
+        .song-list::-webkit-scrollbar { width: 10px; }
+        .song-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        .song-list::-webkit-scrollbar-thumb {
+            background: var(--primary-pink); border-radius: 10px;
+            border: 2px solid var(--surface-dark);
+        }
+        .song-list::-webkit-scrollbar-thumb:hover { background: var(--dark-pink); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="initial-folder-selector-container" id="initialFolderSelector">
+        <h1>Welcome to PinkBeats Pro</h1>
+        <p>Please select your 'Songs' folder to begin.</p>
+        <button class="folder-button" id="initialFolderButton">
+            Select Songs Folder
+        </button>
+    </div>
+
+    <div class="player-container hidden" id="playerContainer">
+        <aside class="sidebar">
+            <div class="app-title">PinkBeats Pro</div>
+            <div class="folder-selector">
+                <button class="folder-button" id="sidebarFolderButton">
+                    Change Songs Folder
+                </button>
+            </div>
+            <div class="search-bar">
+                <span id="searchIconContainer" class="search-icon">
+                </span>
+                <input type="text" placeholder="Search songs..." id="searchSongsInput">
+            </div>
+            <ul class="song-list" id="songList"></ul>
+        </aside>
+
+        <main class="main-content">
+            <section class="album-art-section">
+                <div class="album-art-wrapper">
+                    <img id="albumArt" src="#" alt="Album Art">
+                    <div class="no-image-placeholder" id="noImagePlaceholder">
+                        <span>No Album Art</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="song-details-section">
+                <h2 id="songTitle">No Song Loaded</h2>
+                <p id="songArtist">Select your 'Songs' folder</p>
+            </section>
+
+            <section class="progress-section">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="progressBar" value="0" min="0" max="100" step="0.1">
+                <span id="totalTime">0:00</span>
+            </section>
+
+            <section class="controls-section">
+                <button class="control-btn" id="shuffleBtn" title="Shuffle"></button>
+                <button class="control-btn" id="prevBtn" title="Previous"></button>
+                <button class="control-btn play-btn" id="playPauseBtn" title="Play"></button>
+                <button class="control-btn" id="nextBtn" title="Next"></button>
+                <button class="control-btn" id="loopBtn" title="Loop"></button>
+            </section>
+
+            <section class="extra-controls-section">
+                <div class="volume-control">
+                    <span id="volumeIconContainer"></span>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+                </div>
+                <div class="shuffle-control">
+                     <label for="shuffleSlider">Shuffle Intensity:</label>
+                    <div class="shuffle-slider-container">
+                        <input type="range" id="shuffleSlider" min="0" max="4" value="0" step="1">
+                        <span id="shuffleLevelDisplay">True Shuffle</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        const ICONS = {
+            play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+            pause: '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+            next: '<svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>',
+            prev: '<svg viewBox="0 0 24 24"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>',
+            shuffle: '<svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41L14.5 16.97V20h5.5l-2.05-2.04L7.46 6.04 6.05 4.59 14.83 13.41z"/></svg>',
+            loop: '<svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>',
+            volumeHigh: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+            volumeMedium: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>',
+            volumeLow: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>', 
+            volumeMute: '<svg viewBox="0 0 24 24"><path d="M7 9v6h4l5 5V4L7 9H3zm7.83 3L12.29 9.46l1.41-1.41L16.24 12l2.54-2.54 1.41 1.41L17.65 12l2.54 2.54-1.41 1.41L16.24 13.41l-2.54 2.54-1.41-1.41L14.83 12z"/></svg>',
+            folder: '<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
+            musicNotePlaceholder: '<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>',
+            search: '<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>'
+        };
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const folderInput = document.getElementById('folderInput');
+
+        const initialFolderSelector = document.getElementById('initialFolderSelector');
+        const playerContainer = document.getElementById('playerContainer');
+
+        // Buttons
+        const initialFolderButton = document.getElementById('initialFolderButton');
+        const sidebarFolderButton = document.getElementById('sidebarFolderButton');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const loopBtn = document.getElementById('loopBtn');
+
+        // Display Elements
+        const albumArtImg = document.getElementById('albumArt');
+        const noImagePlaceholder = document.getElementById('noImagePlaceholder');
+        const songTitleDisplay = document.getElementById('songTitle'); // Renamed for clarity from 'songTitle' to 'songTitleDisplay' to avoid conflict with song object property
+        const songArtistDisplay = document.getElementById('songArtist'); // Renamed for clarity
+        const songList = document.getElementById('songList');
+        const searchSongsInput = document.getElementById('searchSongsInput');
+        const searchIconContainer = document.getElementById('searchIconContainer');
+
+
+        // Controls
+        const progressBar = document.getElementById('progressBar');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const totalTimeDisplay = document.getElementById('totalTime');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIconContainer = document.getElementById('volumeIconContainer');
+        const shuffleSlider = document.getElementById('shuffleSlider');
+        const shuffleLevelDisplay = document.getElementById('shuffleLevelDisplay');
+
+        let songs = []; 
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isShuffling = false;
+        let isLooping = false;
+        
+        let shuffleMode = 'min'; 
+        let shuffleHistorySize = 0; 
+        let recentlyPlayedUniqueIndexes = [];
+        let unplayedSongIndexes = []; 
+        let lastPlayedInCycle = -1; 
+
+        const DEFAULT_TITLE = "PinkBeats Pro";
+
+        function initIcons() {
+            initialFolderButton.insertAdjacentHTML('afterbegin', ICONS.folder);
+            sidebarFolderButton.insertAdjacentHTML('afterbegin', ICONS.folder);
+            searchIconContainer.innerHTML = ICONS.search;
+            noImagePlaceholder.insertAdjacentHTML('afterbegin', ICONS.musicNotePlaceholder);
+            playPauseBtn.innerHTML = ICONS.play;
+            prevBtn.innerHTML = ICONS.prev;
+            nextBtn.innerHTML = ICONS.next;
+            shuffleBtn.innerHTML = ICONS.shuffle;
+            loopBtn.innerHTML = ICONS.loop;
+            updateVolumeIcon(); 
+        }
+        initIcons();
+
+        initialFolderButton.addEventListener('click', () => folderInput.click());
+        sidebarFolderButton.addEventListener('click', () => folderInput.click());
+        folderInput.addEventListener('change', handleFolderSelect);
+
+        function handleFolderSelect(event) {
+            const files = Array.from(event.target.files);
+            songs.forEach(song => {
+                if (song.path) URL.revokeObjectURL(song.path);
+                if (song.imagePath) URL.revokeObjectURL(song.imagePath);
+            });
+            songs = []; 
+            currentSongIndex = 0;
+            if(audioPlayer.src) URL.revokeObjectURL(audioPlayer.src);
+
+            const mp3Files = files.filter(file => file.name.toLowerCase().endsWith('.mp3'));
+            
+            mp3Files.forEach(mp3File => {
+                const parsedName = parseSongFilename(mp3File.name);
+                if (!parsedName) return;
+
+                const imageName = `${parsedName.artist} - ${parsedName.title}`;
+                const imageFile = files.find(file =>
+                    (file.name.toLowerCase().startsWith(imageName.toLowerCase()) &&
+                     (file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') || file.name.toLowerCase().endsWith('.png')))
+                );
+
+                songs.push({
+                    title: parsedName.title,
+                    artist: parsedName.artist,
+                    path: URL.createObjectURL(mp3File),
+                    imagePath: imageFile ? URL.createObjectURL(imageFile) : null,
+                    originalFileName: mp3File.name
+                });
+            });
+
+            searchSongsInput.value = ''; 
+            filterPlaylist(); 
+
+            if (songs.length > 0) {
+                initialFolderSelector.classList.add('hidden');
+                playerContainer.classList.remove('hidden');
+                loadSong(currentSongIndex);
+                if (isPlaying) playSong();
+                else pauseSong();
+            } else {
+                alert("No MP3 files found in the selected folder or subfolders.");
+                initialFolderSelector.classList.remove('hidden');
+                playerContainer.classList.add('hidden');
+                songTitleDisplay.textContent = "No Song Loaded";
+                songArtistDisplay.textContent = "Select your 'Songs' folder";
+                document.title = DEFAULT_TITLE; // Reset document title
+                albumArtImg.style.display = 'none';
+                noImagePlaceholder.classList.remove('hidden');
+                songList.innerHTML = '';
+                progressBar.value = 0;
+                currentTimeDisplay.textContent = "0:00";
+                totalTimeDisplay.textContent = "0:00";
+            }
+        }
+        
+        function parseSongFilename(filename) {
+            const regex = /^(?:\d+\.\s*)?(.+?)\s*-\s*(.+?)\.mp3$/i;
+            const match = filename.match(regex);
+            if (match) return { artist: match[1].trim(), title: match[2].trim() };
+            const alternativeRegex = /^(?:[^.]+\.\s*)?(.+?)\s*-\s*(.+?)\.mp3$/i;
+            const altMatch = filename.match(alternativeRegex);
+            if (altMatch) return { artist: altMatch[1].trim(), title: altMatch[2].trim() };
+            console.warn("Could not parse filename:", filename);
+            return null;
+        }
+
+        function loadSong(index) {
+            if (index < 0 || index >= songs.length) return;
+            
+            currentSongIndex = index;
+            const song = songs[currentSongIndex];
+            
+            audioPlayer.src = song.path;
+            songTitleDisplay.textContent = song.title;
+            songArtistDisplay.textContent = song.artist;
+            document.title = `${song.title} - ${song.artist}`; // Update document title
+
+            if (song.imagePath) {
+                albumArtImg.src = song.imagePath;
+                albumArtImg.style.display = 'block';
+                noImagePlaceholder.classList.add('hidden');
+            } else {
+                albumArtImg.style.display = 'none';
+                noImagePlaceholder.classList.remove('hidden');
+            }
+            updateActivePlaylistItem();
+        }
+
+        function playSong() {
+            if (songs.length === 0) return;
+            isPlaying = true;
+            audioPlayer.play().catch(error => console.error("Error playing audio:", error));
+            playPauseBtn.innerHTML = ICONS.pause;
+            playPauseBtn.title = "Pause";
+        }
+
+        function pauseSong() {
+            isPlaying = false;
+            audioPlayer.pause();
+            playPauseBtn.innerHTML = ICONS.play;
+            playPauseBtn.title = "Play";
+            if (songs.length > 0) { // Keep song title in browser tab if paused
+                 document.title = `${songs[currentSongIndex].title} - ${songs[currentSongIndex].artist}`;
+            } else {
+                 document.title = DEFAULT_TITLE;
+            }
+        }
+
+        function togglePlayPause() {
+            if (songs.length === 0) return;
+            if (isPlaying) pauseSong(); else playSong();
+        }
+        
+        function prevSong() {
+            if (songs.length === 0) return;
+            if (isShuffling) {
+                playShuffledSong(true); 
+            } else {
+                currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+                loadSong(currentSongIndex);
+            }
+            if(isPlaying) playSong();
+        }
+        
+        // Renamed from nextSongLogic
+        function advanceSongOnEndLogic() {
+            if (songs.length === 0) return;
+            if (isShuffling) { 
+                playShuffledSong(); 
+            } else {
+                currentSongIndex = (currentSongIndex + 1) % songs.length;
+                loadSong(currentSongIndex);
+            }
+            playSong(); 
+        }
+        
+        nextBtn.addEventListener('click', () => { // Next button always shuffles
+            if (songs.length === 0) return;
+            playShuffledSong(); 
+            playSong();         
+        });
+
+
+        function playShuffledSong(isPrevRequest = false) { 
+            if (songs.length === 0) return;
+            if (songs.length === 1) { loadSong(0); return; }
+
+            let nextIndex;
+
+            if (shuffleMode === 'min') { 
+                if (unplayedSongIndexes.length === 0) {
+                    unplayedSongIndexes = songs.map((_, i) => i);
+                    for (let i = unplayedSongIndexes.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [unplayedSongIndexes[i], unplayedSongIndexes[j]] = [unplayedSongIndexes[j], unplayedSongIndexes[i]];
+                    }
+                    if (songs.length > 1 && unplayedSongIndexes[0] === lastPlayedInCycle) {
+                        if (unplayedSongIndexes.length > 1) { 
+                            let swapWith = unplayedSongIndexes.length -1;
+                            if (unplayedSongIndexes[swapWith] === lastPlayedInCycle && unplayedSongIndexes.length > 2) {
+                                swapWith = unplayedSongIndexes.length - 2;
+                            }
+                            [unplayedSongIndexes[0], unplayedSongIndexes[swapWith]] = [unplayedSongIndexes[swapWith], unplayedSongIndexes[0]];
+                        }
+                    }
+                }
+                nextIndex = unplayedSongIndexes.shift();
+                lastPlayedInCycle = nextIndex;
+            } else { 
+                let Sfilteredsongs = songs.map((s, i) => i)
+                    .filter(i => i !== currentSongIndex && !recentlyPlayedUniqueIndexes.includes(i));
+
+                if (Sfilteredsongs.length === 0) { 
+                    recentlyPlayedUniqueIndexes = [currentSongIndex]; 
+                    Sfilteredsongs = songs.map((s, i) => i).filter(i => i !== currentSongIndex);
+                    if(Sfilteredsongs.length === 0 && songs.length > 0) { 
+                         nextIndex = currentSongIndex; 
+                    } else if (Sfilteredsongs.length > 0) {
+                        nextIndex = Sfilteredsongs[Math.floor(Math.random() * Sfilteredsongs.length)];
+                    } else { 
+                        return;
+                    }
+                } else {
+                    nextIndex = Sfilteredsongs[Math.floor(Math.random() * Sfilteredsongs.length)];
+                }
+
+                recentlyPlayedUniqueIndexes.push(nextIndex);
+                while (recentlyPlayedUniqueIndexes.length > shuffleHistorySize && shuffleHistorySize > 0) { // Ensure shuffleHistorySize > 0
+                    recentlyPlayedUniqueIndexes.shift();
+                }
+            }
+            loadSong(nextIndex);
+        }
+
+        function updateProgressBarUI() {
+            if (!audioPlayer.duration) return;
+            const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.value = progressPercent;
+            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+        }
+
+        function seekProgressBar() {
+            if (!audioPlayer.duration || songs.length === 0) return;
+            audioPlayer.currentTime = (progressBar.value / 100) * audioPlayer.duration;
+        }
+        
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function toggleShuffle() {
+            isShuffling = !isShuffling;
+            shuffleBtn.classList.toggle('active', isShuffling);
+            if (isShuffling) {
+                if (shuffleMode === 'min') {
+                    unplayedSongIndexes = []; 
+                    lastPlayedInCycle = currentSongIndex; 
+                } else { 
+                    recentlyPlayedUniqueIndexes = [currentSongIndex]; 
+                     while (recentlyPlayedUniqueIndexes.length > shuffleHistorySize && shuffleHistorySize > 0) {
+                        recentlyPlayedUniqueIndexes.shift();
+                    }
+                     if (shuffleHistorySize === 0) recentlyPlayedUniqueIndexes = []; 
+                }
+            }
+        }
+
+        function toggleLoop() {
+            isLooping = !isLooping;
+            loopBtn.classList.toggle('active', isLooping);
+            audioPlayer.loop = isLooping;
+        }
+        
+        function handleSongEnd() {
+            if (!isLooping) advanceSongOnEndLogic(); // Use the renamed function
+            else playSong();
+        }
+        
+        function updateVolumeIcon() {
+            if (audioPlayer.volume === 0 || audioPlayer.muted) volumeIconContainer.innerHTML = ICONS.volumeMute;
+            else if (audioPlayer.volume < 0.33) volumeIconContainer.innerHTML = ICONS.volumeLow;
+            else if (audioPlayer.volume < 0.66) volumeIconContainer.innerHTML = ICONS.volumeMedium;
+            else volumeIconContainer.innerHTML = ICONS.volumeHigh;
+        }
+
+        function updateVolume() {
+            audioPlayer.volume = volumeSlider.value;
+            audioPlayer.muted = (parseFloat(volumeSlider.value) === 0); // Ensure it's a number comparison
+            updateVolumeIcon();
+        }
+
+        function renderPlaylist(songsToRender = songs) {
+            songList.innerHTML = ''; 
+            songsToRender.forEach((song) => { 
+                const globalIndex = songs.findIndex(s => s.path === song.path);
+                const item = document.createElement('li');
+                item.dataset.index = globalIndex;
+
+                item.innerHTML = `<span class="song-item-title">${song.title}</span><span class="song-item-artist">${song.artist}</span>`;
+                item.addEventListener('click', () => {
+                    loadSong(globalIndex);
+                    playSong();
+                });
+                songList.appendChild(item);
+            });
+            updateActivePlaylistItem(); 
+        }
+        
+        function filterPlaylist() {
+            const searchTerm = searchSongsInput.value.toLowerCase();
+            const listItems = songList.getElementsByTagName('li');
+
+            // If list is empty but should not be (e.g., after clearing search), re-render all and then filter
+            if (!listItems.length && songs.length && songList.innerHTML === '') {
+                renderPlaylist(); // Render all songs first if list is truly empty
+            }
+
+
+            for (let i=0; i < songs.length; i++) {
+                 const song = songs[i];
+                 const listItem = songList.querySelector(`li[data-index="${i}"]`); // Find corresponding li
+                 if(!listItem) continue; // If li not found (e.g. during initial render)
+
+                 const title = song.title.toLowerCase();
+                 const artist = song.artist.toLowerCase();
+
+                 if (title.includes(searchTerm) || artist.includes(searchTerm)) {
+                    listItem.classList.remove('hidden-by-search');
+                } else {
+                    listItem.classList.add('hidden-by-search');
+                }
+            }
+             updateActivePlaylistItem(); 
+        }
+
+
+        function updateActivePlaylistItem() {
+            const items = songList.querySelectorAll('li');
+            items.forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.index) === currentSongIndex) {
+                    item.classList.add('active');
+                    if(!item.classList.contains('hidden-by-search')){ 
+                         item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            });
+        }
+        
+        function updateShuffleSettings() {
+            const level = parseInt(shuffleSlider.value);
+            const levelMap = {
+                0: { mode: 'min', history: 0, display: "True Shuffle" },       
+                1: { mode: 'history', history: 4, display: "Loose Shuffle" },    
+                2: { mode: 'history', history: 3, display: "Balanced Shuffle" }, 
+                3: { mode: 'history', history: 2, display: "Relaxed Shuffle" },  
+                4: { mode: 'history', history: 1, display: "Free Shuffle" }      
+            };
+
+            shuffleMode = levelMap[level].mode;
+            shuffleHistorySize = levelMap[level].history;
+            shuffleLevelDisplay.textContent = levelMap[level].display;
+
+            if (isShuffling) { 
+                if (shuffleMode === 'min') {
+                    unplayedSongIndexes = [];
+                    lastPlayedInCycle = currentSongIndex;
+                } else {
+                    recentlyPlayedUniqueIndexes = [currentSongIndex];
+                    while (recentlyPlayedUniqueIndexes.length > shuffleHistorySize && shuffleHistorySize > 0) {
+                        recentlyPlayedUniqueIndexes.shift();
+                    }
+                     if (shuffleHistorySize === 0) recentlyPlayedUniqueIndexes = []; 
+                }
+            }
+        }
+
+
+        // Event Listeners
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        prevBtn.addEventListener('click', prevSong);
+        // nextBtn listener is set up directly above advanceSongOnEndLogic
+        shuffleBtn.addEventListener('click', toggleShuffle);
+        loopBtn.addEventListener('click', toggleLoop);
+        
+        audioPlayer.addEventListener('timeupdate', updateProgressBarUI);
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
+            updateProgressBarUI();
+        });
+        audioPlayer.addEventListener('ended', handleSongEnd);
+        
+        progressBar.addEventListener('input', seekProgressBar);
+        volumeSlider.addEventListener('input', updateVolume);
+        
+        searchSongsInput.addEventListener('input', filterPlaylist);
+        shuffleSlider.addEventListener('input', updateShuffleSettings);
+
+
+        // Initial setup
+        updateVolume(); 
+        updateShuffleSettings(); 
+        playerContainer.classList.add('hidden');
+        initialFolderSelector.classList.remove('hidden');
+        document.title = DEFAULT_TITLE; // Set default title on load
+
+    </script>
+</body>
+</html>
