@@ -42,8 +42,35 @@
         
         .main-content { flex-grow: 1; padding: 30px 40px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow-y: auto; }
         .album-art-section { width: 100%; display: flex; justify-content: center; margin-bottom: 25px; margin-top: 10px; }
-        .album-art-wrapper { width: 220px; height: 220px; position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
-        #albumArt { width: 100%; height: 100%; object-fit: cover; display: none; }
+        
+        /* MODIFIED .album-art-wrapper */
+        .album-art-wrapper {
+            width: 220px;
+            height: 220px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden; /* Keeps image corners rounded if image isn't perfectly square */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease-in-out; /* ANIMATION APPLIED HERE */
+            cursor: pointer; /* Optional: make the whole wrapper area feel interactive */
+        }
+
+        /* ADDED :hover state for .album-art-wrapper */
+        .album-art-wrapper:hover {
+            transform: scale(1.05); /* SCALES THE ENTIRE WRAPPER */
+            /* If it overlaps anything important on scale, you might need z-index:
+            /* z-index: 10; */
+        }
+        
+        /* MODIFIED #albumArt - removed transition and hover transform */
+        #albumArt {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none; /* Initially hidden, JS will show it */
+            /* No transition or transform needed here anymore */
+        }
+
         .no-image-placeholder { width: 100%; height: 100%; background-color: var(--background-dark); border: 2px dashed var(--border-color); display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-medium); border-radius: 10px; text-align: center; }
         .no-image-placeholder svg { width: 50px; height: 50px; margin-bottom: 12px; fill: var(--primary-pink); }
         .no-image-placeholder.hidden { display: none; }
@@ -123,6 +150,7 @@
     </style>
 </head>
 <body>
+    <!-- ... rest of your HTML body remains the same ... -->
     <div class="app-wrapper">
         <div class="player-container" id="playerContainer">
             <aside class="sidebar">
